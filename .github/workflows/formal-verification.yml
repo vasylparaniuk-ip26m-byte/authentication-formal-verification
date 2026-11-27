@@ -1,0 +1,48 @@
+
+name: Formal Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: NuSMV Model Checking
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y xz-utils
+
+      - name: Download NuSMV
+        run: |
+          curl -L \
+            https://nusmv.fbk.eu/distrib/2.7.1/NuSMV-2.7.1-linux64.tar.xz \
+            -o NuSMV.tar.xz
+
+      - name: Extract NuSMV
+        run: |
+          mkdir nusmv
+          tar -xf NuSMV.tar.xz -C nusmv
+
+      - name: Run model checking
+        run: |
+          NU_SM_V=$(find nusmv -type f -name NuSMV | head -n 1)
+          chmod +x "$NU_SM_V"
+          "$NU_SM_V" authentication.smv | tee verification.log
+
+      - name: Check verification results
+        run: |
+          COUNT=$(grep -c " is true" verification.log || true)
+          echo "Verified properties: $COUNT"
+          if [ "$COUNT" -ne 5 ]; then
+            echo "Formal verification failed!"
+            exit 1
+          fi
+          echo "All formal properties passed successfully."
