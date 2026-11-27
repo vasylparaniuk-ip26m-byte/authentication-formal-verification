@@ -1,0 +1,97 @@
+
+MODULE main
+
+VAR
+    state : {Idle, Authenticating, Authenticated, Error, Blocked};
+    attempts : 0..3;
+    last_auth_valid : boolean;
+
+IVAR
+    login_request : boolean;
+    valid_credentials : boolean;
+    logout : boolean;
+
+ASSIGN
+    init(state) := Idle;
+    init(attempts) := 0;
+    init(last_auth_valid) := FALSE;
+
+    next(state) :=
+        case
+            state = Idle & login_request :
+                Authenticating;
+
+            state = Authenticating & valid_credentials :
+                Authenticated;
+
+            state = Authenticating & !valid_credentials
+                & attempts < 2 :
+                Error;
+
+            state = Authenticating & !valid_credentials
+                & attempts >= 2 :
+                Blocked;
+
+            state = Error :
+                Idle;
+
+            state = Authenticated & logout :
+                Idle;
+
+            state = Authenticated :
+                Authenticated;
+
+            state = Blocked :
+                Blocked;
+
+            TRUE :
+                state;
+        esac;
+
+    next(attempts) :=
+        case
+            state = Authenticating & !valid_credentials
+                & attempts < 3 :
+                attempts + 1;
+
+            state = Authenticating & valid_credentials :
+                0;
+
+            attempts >= 3 :
+                3;
+
+            TRUE :
+                attempts;
+        esac;
+
+    next(last_auth_valid) :=
+        case
+            state = Authenticating & valid_credentials :
+                TRUE;
+
+            state = Authenticating & !valid_credentials :
+                FALSE;
+
+            state = Authenticated & logout :
+                FALSE;
+
+            TRUE :
+                last_auth_valid;
+        esac;
+
+
+-- Safety: автентифікований користувач пройшов перевірку
+CTLSPEC AG (state = Authenticated -> last_auth_valid)
+
+-- Safety: заблокований стан не може бути покинутий
+CTLSPEC AG (state = Blocked -> AX state = Blocked)
+
+-- Liveness: процес перевірки даних завершується
+CTLSPEC AG (state = Authenticating ->
+    AF (state = Authenticated | state = Error | state = Blocked))
+
+-- Інваріант: лічильник не перевищує 3
+INVARSPEC attempts <= 3
+
+-- Інваріант: лічильник перебуває у допустимому діапазоні
+INVARSPEC attempts >= 0 & attempts <= 3
