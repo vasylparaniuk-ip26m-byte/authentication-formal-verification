@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xz-utils libxml2
+          sudo apt-get install -y xz-utils libxml2 libedit2 libreadline8 libncurses6 libtinfo6 zlib1g
 
       - name: Download NuSMV
         run: |
