@@ -33,16 +33,23 @@ jobs:
 
       - name: Run model checking
         run: |
+          set -o pipefail
           NU_SM_V=$(find nusmv -type f -name NuSMV | head -n 1)
           chmod +x "$NU_SM_V"
-          "$NU_SM_V" authentication.smv | tee verification.log
+          "$NU_SM_V" authentication.smv 2>&1 | tee verification.log
 
       - name: Check verification results
         run: |
+          echo "NuSMV verification output:"
+          cat verification.log
+
           COUNT=$(grep -c " is true" verification.log || true)
+
           echo "Verified properties: $COUNT"
+
           if [ "$COUNT" -ne 5 ]; then
             echo "Formal verification failed!"
             exit 1
           fi
+
           echo "All formal properties passed successfully."
