@@ -1,4 +1,3 @@
-
 name: Formal Verification
 
 on:
@@ -11,7 +10,7 @@ on:
 jobs:
   verify:
     name: NuSMV Model Checking
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -24,9 +23,7 @@ jobs:
 
       - name: Download NuSMV
         run: |
-          curl -L \
-            https://nusmv.fbk.eu/distrib/2.7.1/NuSMV-2.7.1-linux64.tar.xz \
-            -o NuSMV.tar.xz
+          curl -fL https://nusmv.fbk.eu/distrib/2.7.1/NuSMV-2.7.1-linux64.tar.xz -o NuSMV.tar.xz
 
       - name: Extract NuSMV
         run: |
@@ -35,7 +32,7 @@ jobs:
 
       - name: Run model checking
         run: |
-          set -o pipefail
+          set -euo pipefail
           NU_SM_V=$(find nusmv -type f -name NuSMV | head -n 1)
           chmod +x "$NU_SM_V"
           "$NU_SM_V" authentication.smv 2>&1 | tee verification.log
