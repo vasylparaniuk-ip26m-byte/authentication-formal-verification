@@ -18,7 +18,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y xz-utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xz-utils libxml2
 
       - name: Download NuSMV
         run: |
